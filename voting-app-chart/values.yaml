@@ -1,0 +1,417 @@
+# Default values for voting-app-chart-ophelos.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Vote frontend service configuration
+vote:
+  # Number of replicas for the vote service
+  replicaCount: 1
+
+  # Autoscaling configuration for the vote service
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+  # Image configuration for the vote service
+  image:
+    repository: dockersamples/examplevotingapp_vote
+    pullPolicy: Always
+    tag: ""
+
+  # Service configuration for the vote service
+  service:
+    type: NodePort
+    # Port exposed by the service
+    port: 8080
+    # Port exposed by the container
+    targetPort: 80
+    # Node port exposed by the service
+    nodePort: 31000
+    # Annotations for service (useful for cloud load balancers)
+    annotations: {}
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256MI
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Environment variables for the vote service
+  env: {}
+
+  # Liveness probe to check if the service is running
+  livenessProbe:
+    enabled: true
+    # HTTP GET request to check if the service is running
+    httpGet:
+      path: /
+      port: http
+    # Initial delay before the first probe
+    initialDelaySeconds: 30
+    # Period between probes
+    periodSeconds: 10
+    # Timeout for the probe
+    timeoutSeconds: 5
+    # Number of failures before the pod is considered unhealthy
+    failureThreshold: 3
+
+  # Readiness probe to check if the service is ready to serve traffic
+  readinessProbe:
+    enabled: true
+    # HTTP GET request to check if the service is ready to serve traffic
+    httpGet:
+      path: /
+      port: http
+    # Initial delay before the first probe
+    initialDelaySeconds: 30
+    # Period between probes
+    periodSeconds: 10
+    # Timeout for the probe
+    timeoutSeconds: 5
+    # Number of failures before the pod is considered unhealthy
+    failureThreshold: 3
+
+  # Node selector to schedule the pod on specific nodes
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Result service configuration
+result:
+  # Number of replicas for the result service
+  replicaCount: 1
+
+  # Autoscaling configuration for the result service
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+  image:
+    repository: dockersamples/examplevotingapp_result
+    pullPolicy: Always
+    tag: ""
+
+  service:
+    type: NodePort
+    port: 8081
+    targetPort: 80
+    nodePort: 31001
+    annotations: {}
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256MI
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Environment variables for the result service
+  env: {}
+
+  # Liveness probe to check if the service is running
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  # Readiness probe to check if the service is ready to serve traffic
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  # Node selector to schedule the pod on specific nodes
+  nodeSelector: {}
+  # Tolerations to schedule the pod on specific nodes
+  tolerations: []
+  # Affinity to schedule the pod on specific nodes
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+
+# Worker service configuration
+worker:
+  # Number of replicas for the worker service
+  replicaCount: 1
+
+  # Worker service configuration
+  # Note: Worker doesn't need a service as it's a background processor
+
+  # Autoscaling configuration for the worker service
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  # Image configuration for the worker service
+  image:
+    repository: dockersamples/examplevotingapp_worker
+    pullPolicy: Always
+    tag: ""
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256MI
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  env: {}
+
+  restartPolicy: Always
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  # =============================================================================
+  # DATA LAYER CONFIGURATION
+  # =============================================================================
+  # Redis service configuration
+redis:
+  replicaCount: 1
+  image:
+    repository: redis
+    pullPolicy: Always
+    tag: alpine
+
+  service:
+    type: ClusterIP
+    port: 6379
+    targetPort: 6379
+
+  persistence:
+    enabled: false
+    size: 1Gi
+    storageClass: "standard"
+    accessModes: ReadWriteOnce
+
+  # Redis configuration
+  config: {}
+
+  auth:
+    enabled: false
+    password: ""
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256MI
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  livenessProbe:
+    enabled: true
+    exec:
+      command:
+      - redis-cli
+      - ping
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    exec:
+      command:
+      - redis-cli
+      - ping
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+
+# Postgres database configuration
+postgresql:
+  replicaCount: 1
+  image:
+    repository: postgres
+    pullPolicy: Always
+    tag: 15-alpine
+
+  service:
+    type: ClusterIP
+    port: 5432
+    targetPort: 5432
+
+  # In production, persist the data
+  persistence:
+    enabled: false
+    size: 8Gi
+    storageClass: "standard"
+    accessModes: ReadWriteOnce
+
+  # Postgres authentication
+  # Production: Use kubernetes secrets or external secret management
+  auth:
+    username: postgres
+    password: postgres
+    database: postgres
+
+  config: {}
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256MI
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  livenessProbe:
+    enabled: true
+    exec:
+      command:
+      - /bin/sh
+      - -c
+      - pg_isready -U postgres
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    exec:
+      command:
+      - /bin/sh
+      - -c
+      - pg_isready -U postgres
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+
+# Global configuration
+global:
+  # Custom labels to all resources in the chart ( team, project etc)
+  labels: {}
+  annotations: {}
+  environment: "development"
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+  # Network policy for the cluster
+  networkPolicy:
+    enabled: false
+    # policyTypes:
+    #   - Ingress
+    #   - Egress
+
+    # =============================================================================
+    # FEATURE FLAGS
+    # =============================================================================
+
+    # Feature flags to enable/disable components
+features:
+  # Enable/disable monitoring (ServiceMonitor for Prometheus)
+  monitoring:
+    enabled: false
+
+  # Enable/disable ingress for external access
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+      # Example for cert-manager:
+      # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      vote:
+        host: vote.example.com
+        paths:
+        - path: /
+          pathType: Prefix
+      result:
+        host: result.example.com
+        paths:
+        - path: /
+          pathType: Prefix
+    tls: []
+    #  - secretName: voting-app-tls
+    #    hosts:
+    #      - vote.example.com
+    #      - result.example.com
+
+    # Enable/disable pod security policies
+  podSecurityPolicy:
+    enabled: false
+
+  # Enable/disable network policies
+  networkPolicy:
+    enabled: false
+
+# =============================================================================
+# DEPLOYMENT STRATEGY
+# =============================================================================
+
+# SCALABILITY: Update strategy for deployments
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    # Maximum number of pods that can be created above the desired number of pods
+    maxSurge: 1
+    # Maximum number of pods that can be unavailable during the update
+    maxUnavailable: 0
+
+# =============================================================================
+# SECURITY SETTINGS
+# =============================================================================
+
+# Security context for all pods
+# CONFIGURABILITY: Run as non-root, drop capabilities
+securityContext:
+  runAsNonRoot: false
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Security context for containers
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false

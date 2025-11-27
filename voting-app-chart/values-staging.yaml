@@ -1,0 +1,100 @@
+# Staging environment overrides
+# helm install voting-app-chart-ophelos ./voting-app-chart-ophelos -f values-staging.yaml
+
+global:
+  environment: staging
+
+# Minimal scaling for staging
+vote:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  service:
+    type: LoadBalancer
+
+result:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  service:
+    type: LoadBalancer
+
+worker:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+
+redis:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  # Enable persistence for staging
+  persistence:
+    enabled: true
+    size: 1Gi
+
+postgresql:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # Enable persistence for staging
+  persistence:
+    enabled: true
+    size: 5Gi
+
+# Enable ingress for staging
+features:
+  ingress:
+    enabled: true
+    hosts:
+      vote:
+        host: vote-staging.example.com
+      result:
+        host: result-staging.example.com
+  monitoring:
+    enabled: true
+  networkPolicy:
+    enabled: true

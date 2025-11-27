@@ -1,0 +1,71 @@
+# Development environment overrides
+# Use: helm install voting-app ./voting-app-chart -f values-dev.yaml
+
+global:
+  environment: development
+
+# Lower resource requirements for dev
+vote:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  autoscaling:
+    enabled: false
+
+result:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  autoscaling:
+    enabled: false
+
+worker:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+redis:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+  # No persistence in dev
+  persistence:
+    enabled: false
+
+postgresql:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  # No persistence in dev
+  persistence:
+    enabled: false
+
+# No ingress in dev, use NodePort
+features:
+  ingress:
+    enabled: false
+  monitoring:
+    enabled: false

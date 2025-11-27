@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "voting-app.result.fullname" . }}
+  labels:
+    {{- include "voting-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: result
+  {{- with .Values.result.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.result.service.type }}
+  ports:
+    - port: {{ .Values.result.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      {{- if and (eq .Values.result.service.type "NodePort") .Values.result.service.nodePort }}
+      nodePort: {{ .Values.result.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "voting-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: result

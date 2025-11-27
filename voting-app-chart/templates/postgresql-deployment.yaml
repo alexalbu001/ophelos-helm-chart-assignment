@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voting-app.postgresql.fullname" . }}
+  labels:
+    {{- include "voting-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  replicas: {{ .Values.postgresql.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "voting-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if eq .Values.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.postgresql.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "voting-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+        {{- with .Values.postgresql.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        - name: postgresql
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: {{ .Values.postgresql.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_USER
+              {{- if .Values.postgresql.auth.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.existingSecret }}
+                  key: username
+              {{- else }}
+              value: {{ .Values.postgresql.auth.username }}
+              {{- end }}
+            - name: POSTGRES_PASSWORD
+              {{- if .Values.postgresql.auth.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.existingSecret }}
+                  key: {{ .Values.postgresql.auth.userPasswordKey }}
+              {{- else }}
+              value: {{ .Values.postgresql.auth.password }}
+              {{- end }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database }}
+          {{- if .Values.postgresql.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                {{- toYaml .Values.postgresql.livenessProbe.exec.command | nindent 16 }}
+            initialDelaySeconds: {{ .Values.postgresql.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postgresql.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.postgresql.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.postgresql.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.postgresql.readinessProbe.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                {{- toYaml .Values.postgresql.readinessProbe.exec.command | nindent 16 }}
+            initialDelaySeconds: {{ .Values.postgresql.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postgresql.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.postgresql.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.postgresql.readinessProbe.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgresql-data
+          {{- if .Values.postgresql.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "voting-app.postgresql.fullname" . }}-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.postgresql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postgresql.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postgresql.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "voting-app.result.fullname" . }}
+  labels:
+    {{- include "voting-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: result
+spec:
+  {{- if not .Values.result.autoscaling.enabled }}
+  replicas: {{ .Values.result.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "voting-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: result
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if eq .Values.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.result.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "voting-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: result
+        {{- with .Values.result.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        - name: result
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          image: "{{ .Values.result.image.repository }}:{{ .Values.result.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.result.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.result.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.result.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.result.livenessProbe.httpGet.path }}
+              port: {{ .Values.result.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.result.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.result.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.result.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.result.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.result.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.result.readinessProbe.httpGet.path }}
+              port: {{ .Values.result.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.result.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.result.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.result.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.result.readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- with .Values.result.env }}
+          env:
+            {{- range $key, $value := . }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.result.resources | nindent 12 }}
+      {{- with .Values.result.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.result.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.result.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
