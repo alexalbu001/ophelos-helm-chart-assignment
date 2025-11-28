@@ -2,6 +2,10 @@
 
 This chart converts static Kubernetes manifests into a parameterized, environment-aware Helm chart that can scale from development to production. 
 
+### Note
+The voting-app-chart dir contains the generated helm chart
+The voting-app-manifests dir contains the initial kubernetes manifests
+
 ## My Approach
 
 ### Chart Structure
