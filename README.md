@@ -1,10 +1,40 @@
 # Assignment Context
 
-This chart converts static Kubernetes manifests into a parameterized, environment-aware Helm chart that can scale from development to production. 
+This chart converts static Kubernetes manifests into a parameterized, environment-aware Helm chart that can scale from development to production.
 
-### Note
-The voting-app-chart dir contains the generated helm chart
-The voting-app-manifests dir contains the initial kubernetes manifests
+## Note
+- The voting-app-chart dir contains the generated helm chart 
+- The voting-app-manifests dir contains the initial kubernetes manifests
+
+## Components
+
+This chart deploys five microservices:
+
+- **Vote**  - Frontend web app where users cast votes
+- **Result**  - Frontend web app displaying real-time results
+- **Worker**  - Background service processing votes from Redis to PostgreSQL
+- **Redis** - In-memory data store for vote queue
+- **PostgreSQL** - Persistent database storing final results
+
+### Kubernetes Resources
+
+The chart creates the following Kubernetes resources per environment:
+
+**Development (10 resources):**
+- 5 Deployments (vote, result, worker, redis, postgresql)
+- 4 Services (vote, result, redis, postgresql)
+
+**Staging (15 resources):**
+- 5 Deployments 
+- 4 Services
+- 3 HorizontalPodAutoscalers (vote, result, worker)
+- 2 PersistentVolumeClaims (redis, postgresql)
+
+**Production (15 resources):**
+- 5 Deployments 
+- 4 Services
+- 3 HorizontalPodAutoscalers (vote, result, worker)
+- 2 PersistentVolumeClaims (redis, postgresql)
 
 ## My Approach
 
@@ -60,6 +90,10 @@ helm lint .
 # Preview rendered templates
 helm template test . -f values-production.yaml > rendered-prod.yaml
 ```
+
+# Count resources per environment
+Development creates 10 resources. 
+Production creates 15 resources (adds HPAs and PVCs).
 
 ## Configuration Reference
 Key configuration sections in `values.yaml`:

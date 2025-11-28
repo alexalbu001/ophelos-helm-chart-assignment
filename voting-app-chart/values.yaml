@@ -410,10 +410,10 @@ updateStrategy:
 
 # Security context for all pods
 # CONFIGURABILITY: Run as non-root, drop capabilities
-# securityContext:
-#   runAsNonRoot: false
-#   #runAsUser: 1000 this The production configuration set runAsUser: 1000 globally, but PostgreSQL and Redis official images run as user 999 (postgres/redis users). When they tried to access /var/lib/postgresql/data, they got permission denied because the security context forced them to run as the wrong user.
-#   fsGroup: 1000
+securityContext:
+  runAsNonRoot: false
+  #runAsUser: 1000 this The production configuration set runAsUser: 1000 globally, but PostgreSQL and Redis official images run as user 999 (postgres/redis users). When they tried to access /var/lib/postgresql/data, they got permission denied because the security context forced them to run as the wrong user.
+  fsGroup: 1000
 
 # Security context for containers
 containerSecurityContext:
